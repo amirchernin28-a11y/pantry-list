@@ -152,6 +152,7 @@ export function applyTheme(theme: ThemeDefinition) {
   for (const [key, value] of Object.entries(theme.vars)) {
     root.style.setProperty(key, value)
   }
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--color-bg'])
 }
 
 export function initThemeFromStorage() {

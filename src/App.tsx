@@ -27,6 +27,12 @@ export interface AppContext {
   updateHouseholdName: ReturnType<typeof useHousehold>['updateHouseholdName']
 }
 
+function WelcomeGate() {
+  const householdId = getStoredHouseholdId()
+  if (householdId) return <Navigate to="/" replace />
+  return <WelcomePage />
+}
+
 function AppShell() {
   const householdId = getStoredHouseholdId()
   const { household, loading, updateHouseholdName } = useHousehold(householdId)
@@ -41,6 +47,10 @@ function AppShell() {
     incrementQuantity,
     markPurchased,
   } = useItems(householdId, categories)
+
+  if (!householdId) {
+    return <Navigate to="/welcome" replace />
+  }
 
   if (loading) {
     return (
@@ -84,11 +94,9 @@ function AppShell() {
 }
 
 export default function App() {
-  const householdId = getStoredHouseholdId()
-
   return (
     <Routes>
-      <Route path="/welcome" element={householdId ? <Navigate to="/" replace /> : <WelcomePage />} />
+      <Route path="/welcome" element={<WelcomeGate />} />
       <Route path="/join/:code" element={<WelcomePage />} />
       <Route path="/*" element={<AppShell />} />
     </Routes>

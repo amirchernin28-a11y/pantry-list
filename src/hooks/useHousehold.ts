@@ -18,20 +18,32 @@ export function useHousehold(householdId: string | null) {
       .single()
 
     if (fetchError) throw fetchError
-    setHousehold(data)
     return data
   }, [])
 
   useEffect(() => {
     if (!householdId) {
       setHousehold(null)
+      setLoading(false)
       return
     }
 
+    let cancelled = false
     setLoading(true)
     fetchHousehold(householdId)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      .then((data) => {
+        if (!cancelled) setHousehold(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [householdId, fetchHousehold])
 
   const createHousehold = async (name = 'My Home') => {
@@ -117,6 +129,6 @@ export function useHousehold(householdId: string | null) {
     createHousehold,
     joinHousehold,
     updateHouseholdName,
-    refetch: householdId ? () => fetchHousehold(householdId) : undefined,
+    refetch: householdId ? () => fetchHousehold(householdId).then(setHousehold) : undefined,
   }
 }

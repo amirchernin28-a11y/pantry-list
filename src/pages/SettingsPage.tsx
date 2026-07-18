@@ -29,7 +29,7 @@ export function SettingsPage() {
   const leaveHome = () => {
     if (!confirm('Leave this home? You can rejoin with the invite code.')) return
     clearHouseholdId()
-    navigate('/welcome')
+    navigate('/welcome', { replace: true })
   }
 
   return (

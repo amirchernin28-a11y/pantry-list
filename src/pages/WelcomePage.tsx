@@ -1,15 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useHousehold } from '@/hooks/useHousehold'
-import { storeHouseholdId } from '@/lib/household'
+import { getStoredHouseholdId, storeHouseholdId } from '@/lib/household'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 export function WelcomePage() {
   const navigate = useNavigate()
   const { code: urlCode } = useParams()
+  const existingHouseholdId = getStoredHouseholdId()
   const { createHousehold, joinHousehold, loading, error } = useHousehold(null)
   const [joinCode, setJoinCode] = useState(urlCode?.toUpperCase() ?? '')
   const [homeName, setHomeName] = useState('Our Home')
+  const [joinFailed, setJoinFailed] = useState(false)
+  const autoJoinAttempted = useRef(false)
+
+  const isJoinLink = Boolean(urlCode)
+  const isAutoJoining = isJoinLink && !joinFailed
+
+  const performJoin = async (code: string) => {
+    const normalized = code.trim().toUpperCase()
+    if (normalized.length < 6) throw new Error('Invalid invite code. Check the link and try again.')
+    const household = await joinHousehold(normalized)
+    storeHouseholdId(household.id)
+    navigate('/')
+  }
 
   const handleCreate = async () => {
     const household = await createHousehold(homeName.trim() || 'My Home')
@@ -19,10 +33,19 @@ export function WelcomePage() {
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const household = await joinHousehold(joinCode)
-    storeHouseholdId(household.id)
-    navigate('/')
+    setJoinFailed(false)
+    try {
+      await performJoin(joinCode)
+    } catch {
+      setJoinFailed(true)
+    }
   }
+
+  useEffect(() => {
+    if (!urlCode || autoJoinAttempted.current) return
+    autoJoinAttempted.current = true
+    performJoin(urlCode).catch(() => setJoinFailed(true))
+  }, [urlCode])
 
   if (!isSupabaseConfigured()) {
     return (
@@ -39,6 +62,22 @@ export function WelcomePage() {
     )
   }
 
+  if (isAutoJoining) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
+          🏠
+        </div>
+        <h1 className="text-2xl font-bold text-slate-100">Joining home…</h1>
+        <p className="mt-2 text-slate-400">
+          {existingHouseholdId
+            ? 'Switching to your partner\u2019s pantry list.'
+            : 'Connecting you to your partner\u2019s pantry list.'}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4">
       <div className="mb-8 text-center">
@@ -47,11 +86,20 @@ export function WelcomePage() {
         </div>
         <h1 className="text-2xl font-bold text-slate-100">Pantry List</h1>
         <p className="mt-2 text-slate-400">
-          Track what you have at home. Shop when you run low.
+          {isJoinLink && !joinFailed
+            ? 'Enter the invite code below to join your partner\u2019s home.'
+            : 'Track what you have at home. Shop when you run low.'}
         </p>
       </div>
 
       <div className="space-y-6">
+        {existingHouseholdId && isJoinLink && (
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            You&apos;re already in a home. Joining will switch you to your partner&apos;s list.
+          </p>
+        )}
+
+        {(!isJoinLink || joinFailed) && (
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="font-semibold text-slate-100">Create a home</h2>
           <p className="mt-1 text-sm text-slate-400">Start fresh and invite your partner</p>
@@ -75,10 +123,15 @@ export function WelcomePage() {
             {loading ? 'Creating…' : 'Create home'}
           </button>
         </div>
+        )}
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="font-semibold text-slate-100">Join with invite code</h2>
-          <p className="mt-1 text-sm text-slate-400">Enter the code from your partner</p>
+          <p className="mt-1 text-sm text-slate-400">
+            {isJoinLink && joinFailed
+              ? 'Could not join automatically. Check the code and try again.'
+              : 'Enter the code from your partner'}
+          </p>
 
           <form onSubmit={handleJoin} className="mt-4 space-y-3">
             <input

@@ -7,7 +7,7 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { useHousehold } from '@/hooks/useHousehold'
 import { useCategories } from '@/hooks/useCategories'
 import { useItems } from '@/hooks/useItems'
-import { getStoredHouseholdId } from '@/lib/household'
+import { clearHouseholdId, getStoredHouseholdId } from '@/lib/household'
 import type { Category, Household, Item, ShoppingNeed } from '@/types'
 
 export interface AppContext {
@@ -51,6 +51,7 @@ function AppShell() {
   }
 
   if (!household) {
+    if (householdId) clearHouseholdId()
     return <Navigate to="/welcome" replace />
   }
 

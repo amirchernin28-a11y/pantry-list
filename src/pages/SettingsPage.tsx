@@ -29,14 +29,8 @@ export function SettingsPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const copyCode = async () => {
-    await navigator.clipboard.writeText(household.invite_code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   const leaveHome = () => {
-    if (!confirm('Leave this home? You can rejoin with the invite code.')) return
+    if (!confirm('Leave this home? You can rejoin with the invite link from your partner.')) return
     clearHouseholdId()
     navigate('/welcome', { replace: true })
   }
@@ -97,33 +91,19 @@ export function SettingsPage() {
             <h3 className="text-sm font-semibold uppercase tracking-wide text-label">
               Invite partner
             </h3>
-            <p className="mt-1 text-sm text-muted">
-              Share this link or code so your partner can join on their phone
-            </p>
+            <p className="mt-1 text-sm text-muted">Send this link to your partner so they can join on their phone</p>
 
             <div className="mt-4 rounded-lg border border-app bg-app px-4 py-3">
-              <p className="text-xs text-muted">Invite code</p>
-              <p className="font-mono text-2xl font-bold tracking-widest text-app">
-                {household.invite_code}
-              </p>
+              <p className="break-all text-sm text-app">{inviteUrl}</p>
             </div>
 
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={copyInvite}
-                className="btn-primary flex-1 rounded-lg py-2.5 text-sm font-medium"
-              >
-                {copied ? 'Copied!' : 'Copy link'}
-              </button>
-              <button
-                type="button"
-                onClick={copyCode}
-                className="rounded-lg border border-app-muted px-4 py-2.5 text-sm font-medium text-app active:bg-surface-elevated"
-              >
-                Copy code
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={copyInvite}
+              className="btn-primary mt-3 w-full rounded-lg py-2.5 text-sm font-medium"
+            >
+              {copied ? 'Copied!' : 'Copy invite link'}
+            </button>
           </section>
 
           <section className="rounded-2xl border border-app bg-surface p-5">

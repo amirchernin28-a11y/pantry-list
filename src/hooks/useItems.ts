@@ -4,6 +4,10 @@ import { supabase } from '@/lib/supabase'
 import type { Category, Item, ShoppingNeed } from '@/types'
 import { getNeededQuantity, isLowStock } from '@/types'
 
+type ItemUpdatePayload = Partial<
+  Pick<Item, 'name' | 'category_id' | 'target_quantity' | 'current_quantity'>
+>
+
 function patchItem(items: Item[], id: string, updates: Partial<Item>): Item[] {
   return items.map((item) => (item.id === id ? { ...item, ...updates } : item))
 }
@@ -11,7 +15,10 @@ function patchItem(items: Item[], id: string, updates: Partial<Item>): Item[] {
 export function useItems(householdId: string | null, categories: Category[]) {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  const [mutationError, setMutationError] = useState<string | null>(null)
   const inFlightMutations = useRef(0)
+  const pendingQuantities = useRef(new Map<string, number>())
+  const writeQueues = useRef(new Map<string, Promise<void>>())
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -46,7 +53,13 @@ export function useItems(householdId: string | null, categories: Category[]) {
     if (!householdId) return
 
     const mergeRealtimeChange = (payload: RealtimePostgresChangesPayload<Item>) => {
-      if (payload.eventType === 'INSERT' && inFlightMutations.current > 0) return
+      if (inFlightMutations.current > 0) {
+        if (payload.eventType === 'INSERT') return
+        if (payload.eventType === 'UPDATE') {
+          const row = payload.new
+          if (row?.id && pendingQuantities.current.has(row.id)) return
+        }
+      }
 
       setItems((prev) => {
         switch (payload.eventType) {
@@ -58,6 +71,7 @@ export function useItems(householdId: string | null, categories: Category[]) {
           case 'UPDATE': {
             const row = payload.new
             if (!row?.id) return prev
+            if (pendingQuantities.current.has(row.id)) return prev
             if (!prev.some((item) => item.id === row.id)) return [...prev, row]
             return prev.map((item) => (item.id === row.id ? row : item))
           }
@@ -103,6 +117,91 @@ export function useItems(householdId: string | null, categories: Category[]) {
       .sort((a, b) => a.category.sort_order - b.category.sort_order || a.item.name.localeCompare(b.item.name))
   }, [items, categoryMap])
 
+  const reportMutationError = (message: string, error: unknown) => {
+    console.error(message, error)
+    setMutationError(message)
+  }
+
+  const enqueueItemWrite = (id: string, write: () => Promise<void>): Promise<void> => {
+    const previous = writeQueues.current.get(id) ?? Promise.resolve()
+    const next = previous.then(write)
+    writeQueues.current.set(id, next)
+    void next.finally(() => {
+      if (writeQueues.current.get(id) === next) {
+        writeQueues.current.delete(id)
+      }
+    })
+    return next
+  }
+
+  const flushPendingQuantity = async (id: string) => {
+    inFlightMutations.current++
+    try {
+      while (pendingQuantities.current.has(id)) {
+        const quantity = pendingQuantities.current.get(id)!
+        const { data, error } = await supabase
+          .from('items')
+          .update({ current_quantity: quantity })
+          .eq('id', id)
+          .select()
+          .single()
+
+        if (error || !data) {
+          pendingQuantities.current.delete(id)
+          reportMutationError('Could not save quantity change.', error ?? 'No row updated')
+          await fetchItems().catch(console.error)
+          throw error ?? new Error('No row updated')
+        }
+
+        const stillPending = pendingQuantities.current.get(id)
+        if (stillPending === quantity) {
+          pendingQuantities.current.delete(id)
+          setItems((prev) => prev.map((item) => (item.id === id ? data : item)))
+          setMutationError(null)
+          return
+        }
+      }
+    } finally {
+      inFlightMutations.current--
+    }
+  }
+
+  const persistQuantityChange = (id: string, nextQuantity: number) => {
+    pendingQuantities.current.set(id, nextQuantity)
+    const existing = writeQueues.current.get(id)
+    if (existing) return existing
+    return enqueueItemWrite(id, () => flushPendingQuantity(id))
+  }
+
+  const persistItemUpdate = async (
+    id: string,
+    updates: ItemUpdatePayload,
+    previous: Item,
+  ) => {
+    return enqueueItemWrite(id, async () => {
+      inFlightMutations.current++
+      try {
+        const { data, error } = await supabase
+          .from('items')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single()
+
+        if (error || !data) {
+          setItems((prev) => prev.map((item) => (item.id === id ? previous : item)))
+          reportMutationError('Could not save item changes.', error ?? 'No row updated')
+          throw error ?? new Error('No row updated')
+        }
+
+        setItems((prev) => prev.map((item) => (item.id === id ? data : item)))
+        setMutationError(null)
+      } finally {
+        inFlightMutations.current--
+      }
+    })
+  }
+
   const addItem = async (
     name: string,
     categoryId: string,
@@ -140,39 +239,20 @@ export function useItems(householdId: string | null, categories: Category[]) {
         .select()
         .single()
 
-      if (error) {
+      if (error || !data) {
         setItems((prev) => prev.filter((item) => item.id !== tempId))
-        throw error
+        reportMutationError('Could not add item.', error ?? 'No row returned')
+        throw error ?? new Error('No row returned')
       }
 
       setItems((prev) => prev.map((item) => (item.id === tempId ? data : item)))
+      setMutationError(null)
     } finally {
       inFlightMutations.current--
     }
   }
 
-  const persistItemUpdate = async (
-    id: string,
-    updates: Partial<Pick<Item, 'name' | 'category_id' | 'target_quantity' | 'current_quantity'>>,
-    previous: Item,
-  ) => {
-    inFlightMutations.current++
-    try {
-      const { error } = await supabase.from('items').update(updates).eq('id', id)
-      if (error) {
-        setItems((prev) => prev.map((item) => (item.id === id ? previous : item)))
-        console.error(error)
-        throw error
-      }
-    } finally {
-      inFlightMutations.current--
-    }
-  }
-
-  const updateItem = async (
-    id: string,
-    updates: Partial<Pick<Item, 'name' | 'category_id' | 'target_quantity' | 'current_quantity'>>,
-  ) => {
+  const updateItem = async (id: string, updates: ItemUpdatePayload) => {
     let previous: Item | undefined
 
     setItems((prev) => {
@@ -185,51 +265,45 @@ export function useItems(householdId: string | null, categories: Category[]) {
   }
 
   const decrementQuantity = async (id: string) => {
-    let previous: Item | undefined
     let nextQuantity: number | undefined
 
     setItems((prev) => {
       const item = prev.find((i) => i.id === id)
       if (!item || item.current_quantity <= 0) return prev
-      previous = item
       nextQuantity = item.current_quantity - 1
       return patchItem(prev, id, { current_quantity: nextQuantity })
     })
 
-    if (!previous || nextQuantity === undefined) return
-    await persistItemUpdate(id, { current_quantity: nextQuantity }, previous)
+    if (nextQuantity === undefined) return
+    await persistQuantityChange(id, nextQuantity)
   }
 
   const incrementQuantity = async (id: string) => {
-    let previous: Item | undefined
     let nextQuantity: number | undefined
 
     setItems((prev) => {
       const item = prev.find((i) => i.id === id)
       if (!item) return prev
-      previous = item
       nextQuantity = item.current_quantity + 1
       return patchItem(prev, id, { current_quantity: nextQuantity })
     })
 
-    if (!previous || nextQuantity === undefined) return
-    await persistItemUpdate(id, { current_quantity: nextQuantity }, previous)
+    if (nextQuantity === undefined) return
+    await persistQuantityChange(id, nextQuantity)
   }
 
   const markPurchased = async (id: string, amount: number) => {
-    let previous: Item | undefined
     let nextQuantity: number | undefined
 
     setItems((prev) => {
       const item = prev.find((i) => i.id === id)
       if (!item) return prev
-      previous = item
       nextQuantity = Math.min(item.current_quantity + amount, item.target_quantity)
       return patchItem(prev, id, { current_quantity: nextQuantity })
     })
 
-    if (!previous || nextQuantity === undefined) return
-    await persistItemUpdate(id, { current_quantity: nextQuantity }, previous)
+    if (nextQuantity === undefined) return
+    await persistQuantityChange(id, nextQuantity)
   }
 
   const deleteItem = async (id: string) => {
@@ -247,9 +321,10 @@ export function useItems(householdId: string | null, categories: Category[]) {
       const { error } = await supabase.from('items').delete().eq('id', id)
       if (error) {
         setItems((prev) => [...prev, previous!])
-        console.error(error)
+        reportMutationError('Could not delete item.', error)
         throw error
       }
+      setMutationError(null)
     } finally {
       inFlightMutations.current--
     }
@@ -275,6 +350,7 @@ export function useItems(householdId: string | null, categories: Category[]) {
     itemsByCategory,
     shoppingList,
     loading,
+    mutationError,
     addItem,
     updateItem,
     decrementQuantity,

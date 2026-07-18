@@ -7,7 +7,7 @@ import type { AppContext } from '@/App'
 import type { Item } from '@/types'
 
 export function InventoryPage() {
-  const { household, categories, itemsByCategory, addItem, updateItem, deleteItem, decrementQuantity, incrementQuantity } =
+  const { household, categories, itemsByCategory, addItem, updateItem, deleteItem, decrementQuantity, incrementQuantity, mutationError } =
     useOutletContext<AppContext>()
 
   const [showAdd, setShowAdd] = useState(false)
@@ -29,6 +29,12 @@ export function InventoryPage() {
           + Add item
         </button>
       </header>
+
+      {mutationError && (
+        <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300" role="alert">
+          {mutationError}
+        </p>
+      )}
 
       {categories.length === 0 ? (
         <p className="text-center text-muted">Add categories in Settings first.</p>

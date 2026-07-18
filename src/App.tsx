@@ -21,6 +21,7 @@ export interface AppContext {
   decrementQuantity: ReturnType<typeof useItems>['decrementQuantity']
   incrementQuantity: ReturnType<typeof useItems>['incrementQuantity']
   markPurchased: ReturnType<typeof useItems>['markPurchased']
+  mutationError: ReturnType<typeof useItems>['mutationError']
   addCategory: ReturnType<typeof useCategories>['addCategory']
   renameCategory: ReturnType<typeof useCategories>['renameCategory']
   deleteCategory: ReturnType<typeof useCategories>['deleteCategory']
@@ -46,6 +47,7 @@ function AppShell() {
     decrementQuantity,
     incrementQuantity,
     markPurchased,
+    mutationError,
   } = useItems(householdId, categories)
 
   if (!householdId) {
@@ -76,6 +78,7 @@ function AppShell() {
     decrementQuantity,
     incrementQuantity,
     markPurchased,
+    mutationError,
     addCategory,
     renameCategory,
     deleteCategory,

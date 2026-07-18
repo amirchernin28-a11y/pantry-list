@@ -54,8 +54,8 @@ function AppShell() {
 
   if (loading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-slate-400">Loading…</p>
+      <div className="flex min-h-dvh items-center justify-center bg-app">
+        <p className="text-muted">Loading…</p>
       </div>
     )
   }

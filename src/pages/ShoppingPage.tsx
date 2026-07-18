@@ -9,17 +9,17 @@ export function ShoppingPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-100">Shopping list</h1>
-        <p className="text-sm text-slate-400">
+        <h1 className="text-2xl font-bold text-app">Shopping list</h1>
+        <p className="text-sm text-muted">
           Items below your target stock · {shoppingList.length} to buy
         </p>
       </header>
 
       {shoppingList.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 px-6 py-12 text-center">
-          <p className="text-4xl text-brand-500">✓</p>
-          <p className="mt-3 font-medium text-slate-100">All stocked up!</p>
-          <p className="mt-1 text-sm text-slate-400">Nothing to buy right now</p>
+        <div className="rounded-2xl border border-dashed border-app-muted bg-surface/50 px-6 py-12 text-center">
+          <p className="text-4xl text-accent">✓</p>
+          <p className="mt-3 font-medium text-app">All stocked up!</p>
+          <p className="mt-1 text-sm text-muted">Nothing to buy right now</p>
         </div>
       ) : (
         <div className="space-y-2">

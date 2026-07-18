@@ -50,7 +50,7 @@ export function WelcomePage() {
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-app px-4">
         <div className="flex flex-1 flex-col justify-center">
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
             <h1 className="text-xl font-semibold text-amber-300">Setup required</h1>
@@ -68,13 +68,13 @@ export function WelcomePage() {
 
   if (isAutoJoining) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-app px-4">
         <div className="flex flex-1 flex-col justify-center text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-3xl text-white">
             🏠
           </div>
-          <h1 className="text-2xl font-bold text-slate-100">Joining home…</h1>
-          <p className="mt-2 text-slate-400">
+          <h1 className="text-2xl font-bold text-app">Joining home…</h1>
+          <p className="mt-2 text-muted">
             {existingHouseholdId
               ? 'Switching to your partner\u2019s pantry list.'
               : 'Connecting you to your partner\u2019s pantry list.'}
@@ -86,14 +86,14 @@ export function WelcomePage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">
+    <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-app px-4">
       <div className="flex flex-1 flex-col justify-center">
         <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-3xl text-white">
           🏠
         </div>
-        <h1 className="text-2xl font-bold text-slate-100">Pantry List</h1>
-        <p className="mt-2 text-slate-400">
+        <h1 className="text-2xl font-bold text-app">Pantry List</h1>
+        <p className="mt-2 text-muted">
           {isJoinLink && !joinFailed
             ? 'Enter the invite code below to join your partner\u2019s home.'
             : 'Track what you have at home. Shop when you run low.'}
@@ -108,17 +108,17 @@ export function WelcomePage() {
         )}
 
         {(!isJoinLink || joinFailed) && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="font-semibold text-slate-100">Create a home</h2>
-          <p className="mt-1 text-sm text-slate-400">Start fresh and invite your partner</p>
+        <div className="rounded-2xl border border-app bg-surface p-5">
+          <h2 className="font-semibold text-app">Create a home</h2>
+          <p className="mt-1 text-sm text-muted">Start fresh and invite your partner</p>
 
           <label className="mt-4 block">
-            <span className="text-sm font-medium text-slate-300">Home name</span>
+            <span className="text-sm font-medium text-label">Home name</span>
             <input
               type="text"
               value={homeName}
               onChange={(e) => setHomeName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="input-app mt-1 w-full rounded-lg border px-3 py-2.5"
             />
           </label>
 
@@ -126,16 +126,16 @@ export function WelcomePage() {
             type="button"
             onClick={handleCreate}
             disabled={loading}
-            className="mt-4 w-full rounded-lg bg-brand-600 py-3 font-medium text-white active:bg-brand-700 disabled:opacity-50"
+            className="btn-primary mt-4 w-full rounded-lg py-3 font-medium"
           >
             {loading ? 'Creating…' : 'Create home'}
           </button>
         </div>
         )}
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="font-semibold text-slate-100">Join with invite code</h2>
-          <p className="mt-1 text-sm text-slate-400">
+        <div className="rounded-2xl border border-app bg-surface p-5">
+          <h2 className="font-semibold text-app">Join with invite code</h2>
+          <p className="mt-1 text-sm text-muted">
             {isJoinLink && joinFailed
               ? 'Could not join automatically. Check the code and try again.'
               : 'Enter the code from your partner'}
@@ -148,12 +148,12 @@ export function WelcomePage() {
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               placeholder="e.g. ABC12345"
               maxLength={8}
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-center font-mono text-lg tracking-widest text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="input-app w-full rounded-lg border px-3 py-2.5 text-center font-mono text-lg tracking-widest"
             />
             <button
               type="submit"
               disabled={loading || joinCode.length < 6}
-              className="w-full rounded-lg border border-slate-700 py-3 font-medium text-slate-100 active:bg-slate-800 disabled:opacity-50"
+              className="w-full rounded-lg border border-app-muted py-3 font-medium text-app active:bg-surface-elevated disabled:opacity-50"
             >
               {loading ? 'Joining…' : 'Join home'}
             </button>

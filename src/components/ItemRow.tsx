@@ -14,7 +14,7 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
   return (
     <div
       className={`flex items-center gap-3 rounded-xl border px-3 py-3 ${
-        low ? 'border-amber-500/30 bg-amber-500/10' : 'border-slate-800 bg-slate-900'
+        low ? 'border-amber-500/30 bg-amber-500/10' : 'border-app bg-surface'
       }`}
     >
       <button
@@ -22,8 +22,8 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
         onClick={onEdit}
         className="min-w-0 flex-1 text-left"
       >
-        <p className="truncate font-medium text-slate-100">{item.name}</p>
-        <p className={`text-sm ${low ? 'text-amber-300' : 'text-slate-400'}`}>
+        <p className="truncate font-medium text-app">{item.name}</p>
+        <p className={`text-sm ${low ? 'text-amber-300' : 'text-muted'}`}>
           {item.current_quantity} / {item.target_quantity}
           {low && ' · needs restock'}
         </p>
@@ -34,7 +34,7 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
           type="button"
           onClick={onDecrement}
           disabled={item.current_quantity <= 0}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-lg font-medium text-slate-200 active:bg-slate-700 disabled:opacity-30"
+          className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-elevated text-lg font-medium text-app active:opacity-80 disabled:opacity-30"
           aria-label={`Use one ${item.name}`}
         >
           −
@@ -42,7 +42,7 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
         <button
           type="button"
           onClick={onIncrement}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/15 text-lg font-medium text-brand-500 active:bg-brand-500/25"
+          className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-muted text-lg font-medium text-accent active:opacity-80"
           aria-label={`Add one ${item.name}`}
         >
           +

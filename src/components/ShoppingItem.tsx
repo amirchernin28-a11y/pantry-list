@@ -9,10 +9,10 @@ export function ShoppingItem({ entry, onPurchase }: ShoppingItemProps) {
   const { item, category, needed } = entry
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-3">
+    <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 px-3 py-3">
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium text-gray-900">{item.name}</p>
-        <p className="text-sm text-gray-500">
+        <p className="truncate font-medium text-slate-100">{item.name}</p>
+        <p className="text-sm text-slate-400">
           {category.name} · buy {needed}
         </p>
       </div>

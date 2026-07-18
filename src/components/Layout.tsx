@@ -16,7 +16,7 @@ export function Layout({ context }: { context: AppContext }) {
         <Outlet context={context} />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 backdrop-blur-sm">
+      <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg">
           {tabs.map((tab) => {
             const active = location.pathname === tab.path
@@ -25,7 +25,7 @@ export function Layout({ context }: { context: AppContext }) {
                 key={tab.path}
                 to={tab.path}
                 className={`flex flex-1 flex-col items-center gap-0.5 py-3 text-xs font-medium transition-colors ${
-                  active ? 'text-brand-600' : 'text-gray-500 hover:text-gray-700'
+                  active ? 'text-brand-500' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <span className="text-xl">{tab.icon}</span>

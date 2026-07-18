@@ -6,9 +6,19 @@
   --color-brand-500: #22c55e;
   --color-brand-600: #16a34a;
   --color-brand-700: #15803d;
+
+  /* App surface palette (dark) */
+  --color-surface: #0b1120;
+  --color-surface-elevated: #111827;
+}
+
+html {
+  color-scheme: dark;
+  background-color: #0b1120;
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-slate-950 text-slate-100 antialiased;
+  background-color: #0b1120;
   -webkit-tap-highlight-color: transparent;
 }

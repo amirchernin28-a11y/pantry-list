@@ -27,11 +27,11 @@ export function WelcomePage() {
   if (!isSupabaseConfigured()) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4">
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-          <h1 className="text-xl font-semibold text-amber-900">Setup required</h1>
-          <p className="mt-2 text-sm text-amber-800">
-            Copy <code className="rounded bg-amber-100 px-1">.env.example</code> to{' '}
-            <code className="rounded bg-amber-100 px-1">.env</code> and add your Supabase
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+          <h1 className="text-xl font-semibold text-amber-300">Setup required</h1>
+          <p className="mt-2 text-sm text-amber-200/90">
+            Copy <code className="rounded bg-amber-500/20 px-1 text-amber-100">.env.example</code> to{' '}
+            <code className="rounded bg-amber-500/20 px-1 text-amber-100">.env</code> and add your Supabase
             credentials. See README for details.
           </p>
         </div>
@@ -45,24 +45,24 @@ export function WelcomePage() {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
           🏠
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Pantry List</h1>
-        <p className="mt-2 text-gray-500">
+        <h1 className="text-2xl font-bold text-slate-100">Pantry List</h1>
+        <p className="mt-2 text-slate-400">
           Track what you have at home. Shop when you run low.
         </p>
       </div>
 
       <div className="space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="font-semibold text-gray-900">Create a home</h2>
-          <p className="mt-1 text-sm text-gray-500">Start fresh and invite your partner</p>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="font-semibold text-slate-100">Create a home</h2>
+          <p className="mt-1 text-sm text-slate-400">Start fresh and invite your partner</p>
 
           <label className="mt-4 block">
-            <span className="text-sm font-medium text-gray-700">Home name</span>
+            <span className="text-sm font-medium text-slate-300">Home name</span>
             <input
               type="text"
               value={homeName}
               onChange={(e) => setHomeName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </label>
 
@@ -76,9 +76,9 @@ export function WelcomePage() {
           </button>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="font-semibold text-gray-900">Join with invite code</h2>
-          <p className="mt-1 text-sm text-gray-500">Enter the code from your partner</p>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="font-semibold text-slate-100">Join with invite code</h2>
+          <p className="mt-1 text-sm text-slate-400">Enter the code from your partner</p>
 
           <form onSubmit={handleJoin} className="mt-4 space-y-3">
             <input
@@ -87,12 +87,12 @@ export function WelcomePage() {
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               placeholder="e.g. ABC12345"
               maxLength={8}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-center font-mono text-lg tracking-widest focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-center font-mono text-lg tracking-widest text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
             <button
               type="submit"
               disabled={loading || joinCode.length < 6}
-              className="w-full rounded-lg border border-gray-300 py-3 font-medium text-gray-900 active:bg-gray-50 disabled:opacity-50"
+              className="w-full rounded-lg border border-slate-700 py-3 font-medium text-slate-100 active:bg-slate-800 disabled:opacity-50"
             >
               {loading ? 'Joining…' : 'Join home'}
             </button>
@@ -100,7 +100,7 @@ export function WelcomePage() {
         </div>
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+          <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>
         )}
       </div>
     </div>

@@ -16,8 +16,8 @@ export function InventoryPage() {
     <div>
       <header className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{household.name}</h1>
-          <p className="text-sm text-gray-500">Tap − when you use something</p>
+          <h1 className="text-2xl font-bold text-slate-100">{household.name}</h1>
+          <p className="text-sm text-slate-400">Tap − when you use something</p>
         </div>
         <button
           type="button"
@@ -29,7 +29,7 @@ export function InventoryPage() {
       </header>
 
       {categories.length === 0 ? (
-        <p className="text-center text-gray-500">Add categories in Settings first.</p>
+        <p className="text-center text-slate-400">Add categories in Settings first.</p>
       ) : (
         <div className="space-y-6">
           {categories.map((category) => {
@@ -38,7 +38,7 @@ export function InventoryPage() {
 
             return (
               <section key={category.id}>
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
                   {category.name}
                 </h2>
                 <div className="space-y-2">
@@ -57,12 +57,12 @@ export function InventoryPage() {
           })}
 
           {Array.from(itemsByCategory.values()).every((list) => list.length === 0) && (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
-              <p className="text-gray-500">No items yet</p>
+            <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 px-6 py-12 text-center">
+              <p className="text-slate-400">No items yet</p>
               <button
                 type="button"
                 onClick={() => setShowAdd(true)}
-                className="mt-3 text-sm font-medium text-brand-600"
+                className="mt-3 text-sm font-medium text-brand-500"
               >
                 Add your first item
               </button>

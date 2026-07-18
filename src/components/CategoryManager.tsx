@@ -22,13 +22,13 @@ export function CategoryManager({ categories, onAdd, onRename, onDelete }: Categ
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Categories</h3>
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Categories</h3>
 
       <ul className="space-y-2">
         {categories.map((cat) => (
           <li
             key={cat.id}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2"
+            className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2"
           >
             {editingId === cat.id ? (
               <>
@@ -36,7 +36,7 @@ export function CategoryManager({ categories, onAdd, onRename, onDelete }: Categ
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
                   autoFocus
                 />
                 <button
@@ -45,28 +45,28 @@ export function CategoryManager({ categories, onAdd, onRename, onDelete }: Categ
                     await onRename(cat.id, editName)
                     setEditingId(null)
                   }}
-                  className="text-sm font-medium text-brand-600"
+                  className="text-sm font-medium text-brand-500"
                 >
                   Save
                 </button>
               </>
             ) : (
               <>
-                <span className="min-w-0 flex-1 truncate font-medium">{cat.name}</span>
+                <span className="min-w-0 flex-1 truncate font-medium text-slate-100">{cat.name}</span>
                 <button
                   type="button"
                   onClick={() => {
                     setEditingId(cat.id)
                     setEditName(cat.name)
                   }}
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="text-sm text-slate-400 hover:text-slate-200"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
                   onClick={() => onDelete(cat.id)}
-                  className="text-sm text-red-500 hover:text-red-700"
+                  className="text-sm text-red-400 hover:text-red-300"
                 >
                   Delete
                 </button>
@@ -82,12 +82,12 @@ export function CategoryManager({ categories, onAdd, onRename, onDelete }: Categ
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="New category name"
-          className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
         <button
           type="submit"
           disabled={!newName.trim()}
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white active:bg-brand-700 disabled:opacity-50"
         >
           Add
         </button>

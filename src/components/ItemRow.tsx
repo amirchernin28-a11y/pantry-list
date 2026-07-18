@@ -14,7 +14,7 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
   return (
     <div
       className={`flex items-center gap-3 rounded-xl border px-3 py-3 ${
-        low ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'
+        low ? 'border-amber-500/30 bg-amber-500/10' : 'border-slate-800 bg-slate-900'
       }`}
     >
       <button
@@ -22,8 +22,8 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
         onClick={onEdit}
         className="min-w-0 flex-1 text-left"
       >
-        <p className="truncate font-medium text-gray-900">{item.name}</p>
-        <p className={`text-sm ${low ? 'text-amber-700' : 'text-gray-500'}`}>
+        <p className="truncate font-medium text-slate-100">{item.name}</p>
+        <p className={`text-sm ${low ? 'text-amber-300' : 'text-slate-400'}`}>
           {item.current_quantity} / {item.target_quantity}
           {low && ' · needs restock'}
         </p>
@@ -34,7 +34,7 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
           type="button"
           onClick={onDecrement}
           disabled={item.current_quantity <= 0}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-lg font-medium text-gray-700 active:bg-gray-200 disabled:opacity-30"
+          className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-lg font-medium text-slate-200 active:bg-slate-700 disabled:opacity-30"
           aria-label={`Use one ${item.name}`}
         >
           −
@@ -42,7 +42,7 @@ export function ItemRow({ item, onDecrement, onIncrement, onEdit }: ItemRowProps
         <button
           type="button"
           onClick={onIncrement}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 text-lg font-medium text-brand-700 active:bg-brand-100/80"
+          className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/15 text-lg font-medium text-brand-500 active:bg-brand-500/25"
           aria-label={`Add one ${item.name}`}
         >
           +

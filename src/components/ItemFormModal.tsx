@@ -53,23 +53,23 @@ export function ItemFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-2xl shadow-black/40">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+          <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-300">
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Name</span>
+            <span className="text-sm font-medium text-slate-300">Name</span>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               placeholder="e.g. Milk"
               autoFocus
               required
@@ -77,11 +77,11 @@ export function ItemFormModal({
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Category</span>
+            <span className="text-sm font-medium text-slate-300">Category</span>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
@@ -93,23 +93,23 @@ export function ItemFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="text-sm font-medium text-gray-700">Target at home</span>
+              <span className="text-sm font-medium text-slate-300">Target at home</span>
               <input
                 type="number"
                 min={0}
                 value={targetQuantity}
                 onChange={(e) => setTargetQuantity(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </label>
             <label className="block">
-              <span className="text-sm font-medium text-gray-700">Current stock</span>
+              <span className="text-sm font-medium text-slate-300">Current stock</span>
               <input
                 type="number"
                 min={0}
                 value={currentQuantity}
                 onChange={(e) => setCurrentQuantity(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </label>
           </div>
@@ -127,7 +127,7 @@ export function ItemFormModal({
                     setSaving(false)
                   }
                 }}
-                className="rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 active:bg-red-50"
+                className="rounded-lg border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-400 active:bg-red-500/10"
               >
                 Delete
               </button>

@@ -12,6 +12,20 @@ export function InventoryPage() {
 
   const [showAdd, setShowAdd] = useState(false)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const isSearchActive = normalizedQuery.length > 0
+
+  const filterItems = (items: Item[]) => {
+    if (!isSearchActive) return items
+    return items.filter((item) => item.name.toLowerCase().includes(normalizedQuery))
+  }
+
+  const hasAnyItems = Array.from(itemsByCategory.values()).some((list) => list.length > 0)
+  const hasMatchingItems = categories.some(
+    (category) => filterItems(itemsByCategory.get(category.id) ?? []).length > 0,
+  )
 
   return (
     <div className="flex flex-1 flex-col">
@@ -36,12 +50,33 @@ export function InventoryPage() {
         </p>
       )}
 
+      <div className="relative mb-4">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search items…"
+          className="input-app w-full rounded-lg border px-3 py-2.5 pr-10"
+          aria-label="Search items"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1.5 text-muted hover:text-app"
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {categories.length === 0 ? (
         <p className="text-center text-muted">Add categories in Settings first.</p>
       ) : (
         <div className="space-y-6">
           {categories.map((category) => {
-            const categoryItems = itemsByCategory.get(category.id) ?? []
+            const categoryItems = filterItems(itemsByCategory.get(category.id) ?? [])
             if (categoryItems.length === 0) return null
 
             return (
@@ -64,7 +99,20 @@ export function InventoryPage() {
             )
           })}
 
-          {Array.from(itemsByCategory.values()).every((list) => list.length === 0) && (
+          {isSearchActive && hasAnyItems && !hasMatchingItems && (
+            <div className="rounded-2xl border border-dashed border-app-muted bg-surface/50 px-6 py-12 text-center">
+              <p className="text-muted">No items match your search</p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mt-3 text-sm font-medium text-accent"
+              >
+                Clear search
+              </button>
+            </div>
+          )}
+
+          {!isSearchActive && !hasAnyItems && (
             <div className="rounded-2xl border border-dashed border-app-muted bg-surface/50 px-6 py-12 text-center">
               <p className="text-muted">No items yet</p>
               <button

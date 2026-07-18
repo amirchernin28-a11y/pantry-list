@@ -12,7 +12,7 @@ export function Layout({ context }: { context: AppContext }) {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-app">
-      <main className="flex-1 px-4 pb-24 pt-4">
+      <main className="flex flex-1 flex-col px-4 pb-24 pt-4">
         <Outlet context={context} />
       </main>
 

@@ -14,7 +14,8 @@ export function InventoryPage() {
   const [editingItem, setEditingItem] = useState<Item | null>(null)
 
   return (
-    <div>
+    <div className="flex flex-1 flex-col">
+      <div className="flex-1">
       <header className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-app">{household.name}</h1>
@@ -71,6 +72,7 @@ export function InventoryPage() {
           )}
         </div>
       )}
+      </div>
 
       {showAdd && (
         <ItemFormModal

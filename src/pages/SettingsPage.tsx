@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { CategoryManager } from '@/components/CategoryManager'
+import { VersionFooter } from '@/components/VersionFooter'
 import { clearHouseholdId, getInviteUrl } from '@/lib/household'
 import type { AppContext } from '@/App'
 
@@ -107,7 +108,7 @@ export function SettingsPage() {
         Leave home
       </button>
 
-      <p className="pb-2 text-center text-xs text-slate-400">Version {__APP_VERSION__}</p>
+      <VersionFooter />
     </div>
   )
 }

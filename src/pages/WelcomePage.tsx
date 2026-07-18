@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useHousehold } from '@/hooks/useHousehold'
+import { VersionFooter } from '@/components/VersionFooter'
 import { getStoredHouseholdId, storeHouseholdId } from '@/lib/household'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
@@ -49,38 +50,45 @@ export function WelcomePage() {
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4">
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
-          <h1 className="text-xl font-semibold text-amber-300">Setup required</h1>
-          <p className="mt-2 text-sm text-amber-200/90">
-            Copy <code className="rounded bg-amber-500/20 px-1 text-amber-100">.env.example</code> to{' '}
-            <code className="rounded bg-amber-500/20 px-1 text-amber-100">.env</code> and add your Supabase
-            credentials. See README for details.
-          </p>
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">
+        <div className="flex flex-1 flex-col justify-center">
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+            <h1 className="text-xl font-semibold text-amber-300">Setup required</h1>
+            <p className="mt-2 text-sm text-amber-200/90">
+              Copy <code className="rounded bg-amber-500/20 px-1 text-amber-100">.env.example</code> to{' '}
+              <code className="rounded bg-amber-500/20 px-1 text-amber-100">.env</code> and add your Supabase
+              credentials. See README for details.
+            </p>
+          </div>
         </div>
+        <VersionFooter />
       </div>
     )
   }
 
   if (isAutoJoining) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
-          🏠
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">
+        <div className="flex flex-1 flex-col justify-center text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
+            🏠
+          </div>
+          <h1 className="text-2xl font-bold text-slate-100">Joining home…</h1>
+          <p className="mt-2 text-slate-400">
+            {existingHouseholdId
+              ? 'Switching to your partner\u2019s pantry list.'
+              : 'Connecting you to your partner\u2019s pantry list.'}
+          </p>
         </div>
-        <h1 className="text-2xl font-bold text-slate-100">Joining home…</h1>
-        <p className="mt-2 text-slate-400">
-          {existingHouseholdId
-            ? 'Switching to your partner\u2019s pantry list.'
-            : 'Connecting you to your partner\u2019s pantry list.'}
-        </p>
+        <VersionFooter />
       </div>
     )
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4">
-      <div className="mb-8 text-center">
+    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="mb-8 text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
           🏠
         </div>
@@ -156,6 +164,8 @@ export function WelcomePage() {
           <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>
         )}
       </div>
+      </div>
+      <VersionFooter />
     </div>
   )
 }

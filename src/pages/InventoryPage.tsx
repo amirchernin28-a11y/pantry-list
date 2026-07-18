@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { ItemRow } from '@/components/ItemRow'
+import { VersionFooter } from '@/components/VersionFooter'
 import { ItemFormModal } from '@/components/ItemFormModal'
 import type { AppContext } from '@/App'
 import type { Item } from '@/types'
@@ -106,6 +107,8 @@ export function InventoryPage() {
           }}
         />
       )}
+
+      <VersionFooter />
     </div>
   )
 }

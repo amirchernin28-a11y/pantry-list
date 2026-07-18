@@ -136,10 +136,10 @@ export const themes: ThemeDefinition[] = [
   },
 ]
 
-export const DEFAULT_THEME_ID = 'current'
+export const DEFAULT_THEME_ID = 'purple'
 
 export function getThemeById(id: string): ThemeDefinition {
-  return themes.find((t) => t.id === id) ?? themes[0]
+  return themes.find((t) => t.id === id) ?? themes.find((t) => t.id === DEFAULT_THEME_ID)!
 }
 
 export function isValidThemeId(id: string): boolean {

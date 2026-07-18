@@ -19,8 +19,8 @@ export default defineConfig({
         name: 'Pantry List',
         short_name: 'Pantry',
         description: 'Smart household shopping list',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#000000',
+        background_color: '#000000',
         display: 'standalone',
         start_url: '/',
         icons: [

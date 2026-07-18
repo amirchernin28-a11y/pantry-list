@@ -1,3 +1,5 @@
+import { clearHouseholdCache } from '@/lib/offline/db'
+
 const HOUSEHOLD_KEY = 'pantry_household_id'
 
 export function getStoredHouseholdId(): string | null {
@@ -9,7 +11,9 @@ export function storeHouseholdId(id: string): void {
 }
 
 export function clearHouseholdId(): void {
+  const id = localStorage.getItem(HOUSEHOLD_KEY)
   localStorage.removeItem(HOUSEHOLD_KEY)
+  if (id) void clearHouseholdCache(id)
 }
 
 export function generateInviteCode(): string {

@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import {
+  addPendingOp,
+  getCachedItems,
+  hasEverSynced,
+  markFetched,
+  setCachedItems,
+} from '@/lib/offline/db'
+import { flushPendingQueue } from '@/lib/offline/sync'
 import type { Category, Item, ShoppingNeed } from '@/types'
 import { getNeededQuantity, isLowStock } from '@/types'
 
@@ -12,9 +20,19 @@ function patchItem(items: Item[], id: string, updates: Partial<Item>): Item[] {
   return items.map((item) => (item.id === id ? { ...item, ...updates } : item))
 }
 
+function isNetworkError(error: unknown): boolean {
+  if (error instanceof TypeError) return true
+  if (error && typeof error === 'object' && 'message' in error) {
+    const msg = String((error as { message: string }).message).toLowerCase()
+    return msg.includes('fetch') || msg.includes('network') || msg.includes('failed to fetch')
+  }
+  return false
+}
+
 export function useItems(householdId: string | null, categories: Category[]) {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  const [offlineNoCache, setOfflineNoCache] = useState(false)
   const [mutationError, setMutationError] = useState<string | null>(null)
   const inFlightMutations = useRef(0)
   const pendingQuantities = useRef(new Map<string, number>())
@@ -30,7 +48,6 @@ export function useItems(householdId: string | null, categories: Category[]) {
   const fetchItems = useCallback(async () => {
     if (!householdId) {
       setItems([])
-      setLoading(false)
       return
     }
 
@@ -41,20 +58,80 @@ export function useItems(householdId: string | null, categories: Category[]) {
       .order('name')
 
     if (error) throw error
-    setItems(data ?? [])
+    const next = data ?? []
+    setItems(next)
+    await setCachedItems(householdId, next)
+    await markFetched(householdId)
   }, [householdId])
 
   useEffect(() => {
-    setLoading(true)
-    fetchItems()
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [fetchItems])
+    if (!householdId) {
+      setItems([])
+      setLoading(false)
+      setOfflineNoCache(false)
+      return
+    }
+
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      setOfflineNoCache(false)
+
+      const cached = await getCachedItems(householdId!)
+      if (cached && !cancelled) {
+        setItems(cached)
+        setLoading(false)
+      }
+
+      if (!navigator.onLine) {
+        const synced = await hasEverSynced(householdId!)
+        if (!synced && !cancelled) setOfflineNoCache(true)
+        if (!cancelled) setLoading(false)
+        return
+      }
+
+      try {
+        await flushPendingQueue(householdId!)
+        await fetchItems()
+      } catch (err) {
+        console.error(err)
+        if (!cached && !cancelled) {
+          const synced = await hasEverSynced(householdId!)
+          if (!synced) setOfflineNoCache(true)
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [householdId, fetchItems])
+
+  useEffect(() => {
+    if (!householdId) return
+
+    const handleOnline = async () => {
+      try {
+        await flushPendingQueue(householdId)
+        await fetchItems()
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [householdId, fetchItems])
 
   useEffect(() => {
     if (!householdId) return
 
     const mergeRealtimeChange = (payload: RealtimePostgresChangesPayload<Item>) => {
+      if (!navigator.onLine) return
       if (inFlightMutations.current > 0) {
         if (payload.eventType === 'INSERT') return
         if (payload.eventType === 'UPDATE') {
@@ -64,27 +141,34 @@ export function useItems(householdId: string | null, categories: Category[]) {
       }
 
       setItems((prev) => {
+        let next: Item[]
         switch (payload.eventType) {
           case 'INSERT': {
             const row = payload.new
             if (!row?.id || prev.some((item) => item.id === row.id)) return prev
-            return [...prev, row]
+            next = [...prev, row]
+            break
           }
           case 'UPDATE': {
             const row = payload.new
             if (!row?.id) return prev
             if (pendingQuantities.current.has(row.id)) return prev
-            if (!prev.some((item) => item.id === row.id)) return [...prev, row]
-            return prev.map((item) => (item.id === row.id ? row : item))
+            next = !prev.some((item) => item.id === row.id)
+              ? [...prev, row]
+              : prev.map((item) => (item.id === row.id ? row : item))
+            break
           }
           case 'DELETE': {
             const id = payload.old?.id
             if (!id) return prev
-            return prev.filter((item) => item.id !== id)
+            next = prev.filter((item) => item.id !== id)
+            break
           }
           default:
             return prev
         }
+        void setCachedItems(householdId, next)
+        return next
       })
     }
 
@@ -136,11 +220,31 @@ export function useItems(householdId: string | null, categories: Category[]) {
     return next
   }
 
+  const queueOfflineQuantity = async (id: string, quantity: number) => {
+    if (!householdId) return
+    pendingQuantities.current.delete(id)
+    const next = itemsRef.current.map((item) =>
+      item.id === id ? { ...item, current_quantity: quantity } : item,
+    )
+    await setCachedItems(householdId, next)
+    await addPendingOp(householdId, {
+      op: 'update_quantity',
+      payload: { itemId: id, current_quantity: quantity },
+    })
+    setMutationError(null)
+  }
+
   const flushPendingQuantity = async (id: string) => {
     inFlightMutations.current++
     try {
       while (pendingQuantities.current.has(id)) {
         const quantity = pendingQuantities.current.get(id)!
+
+        if (!navigator.onLine) {
+          await queueOfflineQuantity(id, quantity)
+          return
+        }
+
         const { data, error } = await supabase
           .from('items')
           .update({ current_quantity: quantity })
@@ -149,6 +253,10 @@ export function useItems(householdId: string | null, categories: Category[]) {
           .single()
 
         if (error || !data) {
+          if (isNetworkError(error)) {
+            await queueOfflineQuantity(id, quantity)
+            return
+          }
           pendingQuantities.current.delete(id)
           reportMutationError('Could not save quantity change.', error ?? 'No row updated')
           await fetchItems().catch(console.error)
@@ -158,7 +266,9 @@ export function useItems(householdId: string | null, categories: Category[]) {
         const stillPending = pendingQuantities.current.get(id)
         if (stillPending === quantity) {
           pendingQuantities.current.delete(id)
-          setItems((prev) => prev.map((item) => (item.id === id ? data : item)))
+          const next = itemsRef.current.map((item) => (item.id === id ? data : item))
+          setItems(next)
+          await setCachedItems(householdId!, next)
           setMutationError(null)
           return
         }
@@ -187,6 +297,17 @@ export function useItems(householdId: string | null, categories: Category[]) {
     return enqueueItemWrite(id, async () => {
       inFlightMutations.current++
       try {
+        if (!navigator.onLine) {
+          const next = patchItem(itemsRef.current, id, updates)
+          await setCachedItems(householdId!, next)
+          await addPendingOp(householdId!, {
+            op: 'update_item',
+            payload: { itemId: id, updates },
+          })
+          setMutationError(null)
+          return
+        }
+
         const { data, error } = await supabase
           .from('items')
           .update(updates)
@@ -195,12 +316,24 @@ export function useItems(householdId: string | null, categories: Category[]) {
           .single()
 
         if (error || !data) {
+          if (isNetworkError(error)) {
+            const next = patchItem(itemsRef.current, id, updates)
+            await setCachedItems(householdId!, next)
+            await addPendingOp(householdId!, {
+              op: 'update_item',
+              payload: { itemId: id, updates },
+            })
+            setMutationError(null)
+            return
+          }
           setItems((prev) => prev.map((item) => (item.id === id ? previous : item)))
           reportMutationError('Could not save item changes.', error ?? 'No row updated')
           throw error ?? new Error('No row updated')
         }
 
-        setItems((prev) => prev.map((item) => (item.id === id ? data : item)))
+        const next = itemsRef.current.map((item) => (item.id === id ? data : item))
+        setItems(next)
+        await setCachedItems(householdId!, next)
         setMutationError(null)
       } finally {
         inFlightMutations.current--
@@ -229,10 +362,32 @@ export function useItems(householdId: string | null, categories: Category[]) {
       updated_at: now,
     }
 
-    setItems((prev) => [...prev, optimistic])
+    const nextWithOptimistic = [...itemsRef.current, optimistic]
+    setItems(nextWithOptimistic)
     inFlightMutations.current++
 
+    const cacheInsert = async () => {
+      await setCachedItems(householdId, nextWithOptimistic)
+      await addPendingOp(householdId, {
+        op: 'insert_item',
+        payload: {
+          tempId,
+          household_id: householdId,
+          category_id: categoryId,
+          name: name.trim(),
+          target_quantity: targetQuantity,
+          current_quantity: currentQuantity,
+        },
+      })
+      setMutationError(null)
+    }
+
     try {
+      if (!navigator.onLine) {
+        await cacheInsert()
+        return
+      }
+
       const { data, error } = await supabase
         .from('items')
         .insert({
@@ -246,12 +401,18 @@ export function useItems(householdId: string | null, categories: Category[]) {
         .single()
 
       if (error || !data) {
+        if (isNetworkError(error)) {
+          await cacheInsert()
+          return
+        }
         setItems((prev) => prev.filter((item) => item.id !== tempId))
         reportMutationError('Could not add item.', error ?? 'No row returned')
         throw error ?? new Error('No row returned')
       }
 
-      setItems((prev) => prev.map((item) => (item.id === tempId ? data : item)))
+      const next = itemsRef.current.map((item) => (item.id === tempId ? data : item))
+      setItems(next)
+      await setCachedItems(householdId, next)
       setMutationError(null)
     } finally {
       inFlightMutations.current--
@@ -300,22 +461,44 @@ export function useItems(householdId: string | null, categories: Category[]) {
 
   const deleteItem = async (id: string) => {
     let previous: Item | undefined
+    let nextItems: Item[] = []
 
     setItems((prev) => {
       previous = prev.find((item) => item.id === id)
-      return prev.filter((item) => item.id !== id)
+      nextItems = prev.filter((item) => item.id !== id)
+      return nextItems
     })
 
     if (!previous) return
 
     inFlightMutations.current++
     try {
+      if (!navigator.onLine) {
+        await setCachedItems(householdId!, nextItems)
+        await addPendingOp(householdId!, {
+          op: 'delete_item',
+          payload: { itemId: id },
+        })
+        setMutationError(null)
+        return
+      }
+
       const { error } = await supabase.from('items').delete().eq('id', id)
       if (error) {
+        if (isNetworkError(error)) {
+          await setCachedItems(householdId!, nextItems)
+          await addPendingOp(householdId!, {
+            op: 'delete_item',
+            payload: { itemId: id },
+          })
+          setMutationError(null)
+          return
+        }
         setItems((prev) => [...prev, previous!])
         reportMutationError('Could not delete item.', error)
         throw error
       }
+      await setCachedItems(householdId!, nextItems)
       setMutationError(null)
     } finally {
       inFlightMutations.current--
@@ -342,6 +525,7 @@ export function useItems(householdId: string | null, categories: Category[]) {
     itemsByCategory,
     shoppingList,
     loading,
+    offlineNoCache,
     mutationError,
     addItem,
     updateItem,

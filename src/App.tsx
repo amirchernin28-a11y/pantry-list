@@ -41,6 +41,8 @@ function AppShell() {
   const {
     itemsByCategory,
     shoppingList,
+    loading: itemsLoading,
+    offlineNoCache,
     addItem,
     updateItem,
     deleteItem,
@@ -54,10 +56,23 @@ function AppShell() {
     return <Navigate to="/welcome" replace />
   }
 
-  if (loading) {
+  if (loading || itemsLoading) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-app">
         <p className="text-muted">Loading…</p>
+      </div>
+    )
+  }
+
+  if (offlineNoCache) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center bg-app px-4">
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-center">
+          <h1 className="text-lg font-semibold text-amber-200">You&apos;re offline</h1>
+          <p className="mt-2 text-sm text-amber-200/90">
+            Connect once to load your home. Your changes will work offline after that.
+          </p>
+        </div>
       </div>
     )
   }

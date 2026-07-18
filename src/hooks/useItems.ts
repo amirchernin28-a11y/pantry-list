@@ -19,6 +19,8 @@ export function useItems(householdId: string | null, categories: Category[]) {
   const inFlightMutations = useRef(0)
   const pendingQuantities = useRef(new Map<string, number>())
   const writeQueues = useRef(new Map<string, Promise<void>>())
+  const itemsRef = useRef(items)
+  itemsRef.current = items
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -166,10 +168,14 @@ export function useItems(householdId: string | null, categories: Category[]) {
     }
   }
 
+  const getEffectiveQuantity = (id: string) => {
+    const pending = pendingQuantities.current.get(id)
+    if (pending !== undefined) return pending
+    return itemsRef.current.find((item) => item.id === id)?.current_quantity
+  }
+
   const persistQuantityChange = (id: string, nextQuantity: number) => {
     pendingQuantities.current.set(id, nextQuantity)
-    const existing = writeQueues.current.get(id)
-    if (existing) return existing
     return enqueueItemWrite(id, () => flushPendingQuantity(id))
   }
 
@@ -265,44 +271,30 @@ export function useItems(householdId: string | null, categories: Category[]) {
   }
 
   const decrementQuantity = async (id: string) => {
-    let nextQuantity: number | undefined
+    const current = getEffectiveQuantity(id)
+    if (current === undefined || current <= 0) return
 
-    setItems((prev) => {
-      const item = prev.find((i) => i.id === id)
-      if (!item || item.current_quantity <= 0) return prev
-      nextQuantity = item.current_quantity - 1
-      return patchItem(prev, id, { current_quantity: nextQuantity })
-    })
-
-    if (nextQuantity === undefined) return
+    const nextQuantity = current - 1
+    setItems((prev) => patchItem(prev, id, { current_quantity: nextQuantity }))
     await persistQuantityChange(id, nextQuantity)
   }
 
   const incrementQuantity = async (id: string) => {
-    let nextQuantity: number | undefined
+    const current = getEffectiveQuantity(id)
+    if (current === undefined) return
 
-    setItems((prev) => {
-      const item = prev.find((i) => i.id === id)
-      if (!item) return prev
-      nextQuantity = item.current_quantity + 1
-      return patchItem(prev, id, { current_quantity: nextQuantity })
-    })
-
-    if (nextQuantity === undefined) return
+    const nextQuantity = current + 1
+    setItems((prev) => patchItem(prev, id, { current_quantity: nextQuantity }))
     await persistQuantityChange(id, nextQuantity)
   }
 
   const markPurchased = async (id: string, amount: number) => {
-    let nextQuantity: number | undefined
+    const item = itemsRef.current.find((i) => i.id === id)
+    const current = getEffectiveQuantity(id)
+    if (!item || current === undefined) return
 
-    setItems((prev) => {
-      const item = prev.find((i) => i.id === id)
-      if (!item) return prev
-      nextQuantity = Math.min(item.current_quantity + amount, item.target_quantity)
-      return patchItem(prev, id, { current_quantity: nextQuantity })
-    })
-
-    if (nextQuantity === undefined) return
+    const nextQuantity = Math.min(current + amount, item.target_quantity)
+    setItems((prev) => patchItem(prev, id, { current_quantity: nextQuantity }))
     await persistQuantityChange(id, nextQuantity)
   }
 
